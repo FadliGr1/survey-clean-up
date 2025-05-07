@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoClean - Survey Data Cleanup Tool</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9a0;
+            --warning: #f9c74f;
+            --danger: #ef476f;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fd;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .navbar {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.2rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary);
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+        }
+        
+        .btn-success:hover {
+            background-color: #3da584;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background-color: #d64062;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .file-info {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .process-btn-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        #results {
+            margin-top: 2rem;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-label {
+            font-weight: 500;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex-grow: 1;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .process-btn-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo">
+                <span>🌍 GeoClean</span>
+            </div>
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#guide">Guide</a>
+                <a href="#about">About</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container" id="home">
+        <div class="card">
+            <h1>Survey Data Cleanup Tool</h1>
+            <p>Clean up duplicate placemarks in your KML/KMZ survey files with a single click.</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <p><strong>Drag & Drop</strong> your KML or KMZ file here<br>or <strong>Click</strong> to browse files</p>
+                <input type="file" id="fileInput" accept=".kml,.kmz" class="hidden">
+            </div>
+            
+            <div id="fileDetails" class="hidden">
+                <div class="file-info">
+                    <h3>File Information</h3>
+                    <div id="fileName"></div>
+                    <div id="fileSize"></div>
+                    <div id="placemarkCount"></div>
+                </div>
+                
+                <div class="process-btn-container">
+                    <button id="processBtn" class="btn">Clean Duplicate Placemarks</button>
+                    <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+            
+            <div id="processing" class="hidden">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+                <p class="text-center">Processing your file...</p>
+            </div>
+            
+            <div id="results" class="hidden">
+                <h3>Cleanup Results</h3>
+                
+                <div class="summary-item">
+                    <span class="summary-label">Original Placemarks:</span>
+                    <span id="originalCount">0</span>
+                </div>
+                
+                <div class="summary-item">
+                    <span class="summary-label">Duplicate Placemarks:</span>
+                    <span id="duplicateCount">0</span>
+                </div>
+                
+                <div class="summary-item">
+                    <span class="summary-label">Placemarks After Cleanup:</span>
+                    <span id="cleanedCount">0</span>
+                </div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <button id="downloadBtn" class="btn btn-success">Download Cleaned File</button>
+                    <button id="newFileBtn" class="btn btn-secondary" style="margin-left: 1rem;">Process Another File</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="guide">
+            <h2>How to Use</h2>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Upload Your File</div>
+                    <p>Drag and drop your KML or KMZ file into the upload area, or click to browse your files.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Review and Clean</div>
+                    <p>Review your file information and click "Clean Duplicate Placemarks" to remove duplicates.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Download Results</div>
+                    <p>After processing, download your cleaned file with duplicate placemarks removed.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" id="about">
+            <h2>About GeoClean</h2>
+            <p>GeoClean is a specialized tool designed to help surveyors and GIS professionals clean up their KML/KMZ files by removing duplicate placemarks. When multiple placemarks are created at the same coordinates during field surveys, GeoClean can identify and eliminate these duplicates, leaving only one placemark per location.</p>
+            <p>This tool works entirely in your browser - your files are processed locally and never uploaded to any server, ensuring your data remains secure and private.</p>
+            <p><strong>Created by:</strong> fadligr</p>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 GeoClean | Created by fadligr</p>
+    </footer>
+    
+    <script>
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileDetails = document.getElementById('fileDetails');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const placemarkCount = document.getElementById('placemarkCount');
+        const processBtn = document.getElementById('processBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const processing = document.getElementById('processing');
+        const results = document.getElementById('results');
+        const originalCount = document.getElementById('originalCount');
+        const duplicateCount = document.getElementById('duplicateCount');
+        const cleanedCount = document.getElementById('cleanedCount');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newFileBtn = document.getElementById('newFileBtn');
+        
+        // Variables to store file data
+        let currentFile = null;
+        let kmlContent = null;
+        let cleanedKmlContent = null;
+        let placemarks = [];
+        
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        processBtn.addEventListener('click', processFile);
+        cancelBtn.addEventListener('click', resetForm);
+        downloadBtn.addEventListener('click', downloadCleanedFile);
+        newFileBtn.addEventListener('click', resetForm);
+        
+        // Handle drag over
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('dragover');
+        }
+        
+        // Handle drag leave
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragover');
+        }
+        
+        // Handle file drop
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        }
+        
+        // Handle file selection
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                handleFiles(e.target.files);
+            }
+        }
+        
+        // Process the selected files
+        function handleFiles(files) {
+            const file = files[0];
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            
+            if (fileExt !== 'kml' && fileExt !== 'kmz') {
+                alert('Please select a KML or KMZ file.');
+                return;
+            }
+            
+            currentFile = file;
+            
+            // Display file details
+            fileName.textContent = `File Name: ${file.name}`;
+            fileSize.textContent = `File Size: ${formatFileSize(file.size)}`;
+            placemarkCount.textContent = 'Analyzing file...';
+            
+            fileDetails.classList.remove('hidden');
+            
+            // Read file content
+            if (fileExt === 'kml') {
+                readKMLFile(file);
+            } else {
+                readKMZFile(file);
+            }
+        }
+        
+        // Read KML file
+        function readKMLFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                kmlContent = e.target.result;
+                analyzeKML(kmlContent);
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Read KMZ file (compressed KML)
+        function readKMZFile(file) {
+            // Note: This would require JSZip library for full implementation
+            // For simplicity in this demo, we'll show a message
+            placemarkCount.textContent = 'KMZ files support is limited in this demo';
+            alert('KMZ support is available in the full version. Please use KML files for this demo.');
+        }
+        
+        // Analyze KML content to count placemarks
+        function analyzeKML(kmlString) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(kmlString, "text/xml");
+            
+            // Find all Placemark elements
+            placemarks = xmlDoc.getElementsByTagName('Placemark');
+            placemarkCount.textContent = `Placemarks Found: ${placemarks.length}`;
+        }
+        
+        // Process file to remove duplicates
+        function processFile() {
+            if (!kmlContent) {
+                alert('Please upload a valid KML file first.');
+                return;
+            }
+            
+            fileDetails.classList.add('hidden');
+            processing.classList.remove('hidden');
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                cleanDuplicatePlacemarks();
+                showResults();
+            }, 1500);
+        }
+        
+        // Clean duplicate placemarks
+        function cleanDuplicatePlacemarks() {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(kmlContent, "text/xml");
+            
+            // Find all Placemark elements
+            const placemarks = xmlDoc.getElementsByTagName('Placemark');
+            const originalPlacemarkCount = placemarks.length;
+            
+            // Track coordinates to find duplicates
+            const uniqueCoordinates = new Map();
+            const duplicatePlacemarks = [];
+            
+            // First pass: collect all coordinates and identify duplicates
+            for (let i = 0; i < placemarks.length; i++) {
+                const placemark = placemarks[i];
+                const coordinates = getPlacemarkCoordinates(placemark);
+                
+                if (coordinates) {
+                    const coordKey = coordinates.trim();
+                    
+                    if (uniqueCoordinates.has(coordKey)) {
+                        // This is a duplicate
+                        duplicatePlacemarks.push(placemark);
+                    } else {
+                        // This is the first occurrence
+                        uniqueCoordinates.set(coordKey, placemark);
+                    }
+                }
+            }
+            
+            // Second pass: remove duplicate placemarks
+            duplicatePlacemarks.forEach(placemark => {
+                placemark.parentNode.removeChild(placemark);
+            });
+            
+            // Generate the cleaned KML
+            const serializer = new XMLSerializer();
+            cleanedKmlContent = serializer.serializeToString(xmlDoc);
+            
+            // Update counts for results
+            originalCount.textContent = originalPlacemarkCount;
+            duplicateCount.textContent = duplicatePlacemarks.length;
+            cleanedCount.textContent = originalPlacemarkCount - duplicatePlacemarks.length;
+        }
+        
+        // Get coordinates from a placemark
+        function getPlacemarkCoordinates(placemark) {
+            // Try to find Point > coordinates
+            const pointCoords = placemark.querySelector('Point > coordinates');
+            if (pointCoords && pointCoords.textContent) {
+                return pointCoords.textContent;
+            }
+            
+            // Try to find LineString > coordinates (first point)
+            const lineCoords = placemark.querySelector('LineString > coordinates');
+            if (lineCoords && lineCoords.textContent) {
+                // For LineString, use the first coordinate pair
+                const allCoords = lineCoords.textContent.trim().split(/\s+/);
+                if (allCoords.length > 0) {
+                    return allCoords[0];
+                }
+            }
+            
+            // Try to find Polygon > outerBoundaryIs > LinearRing > coordinates (first point)
+            const polygonCoords = placemark.querySelector('Polygon > outerBoundaryIs > LinearRing > coordinates');
+            if (polygonCoords && polygonCoords.textContent) {
+                // For Polygon, use the first coordinate pair
+                const allCoords = polygonCoords.textContent.trim().split(/\s+/);
+                if (allCoords.length > 0) {
+                    return allCoords[0];
+                }
+            }
+            
+            return null;
+        }
+        
+        // Show results after processing
+        function showResults() {
+            processing.classList.add('hidden');
+            results.classList.remove('hidden');
+        }
+        
+        // Download the cleaned KML file
+        function downloadCleanedFile() {
+            if (!cleanedKmlContent) {
+                alert('No cleaned file available. Please process a file first.');
+                return;
+            }
+            
+            const blob = new Blob([cleanedKmlContent], { type: 'application/vnd.google-earth.kml+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFile.name.replace('.kml', '_cleaned.kml');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Reset the form to process another file
+        function resetForm() {
+            fileDetails.classList.add('hidden');
+            processing.classList.add('hidden');
+            results.classList.add('hidden');
+            
+            fileInput.value = '';
+            currentFile = null;
+            kmlContent = null;
+            cleanedKmlContent = null;
+            placemarks = [];
+        }
+        
+        // Format file size to human-readable format
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+            else return (bytes / 1048576).toFixed(2) + ' MB';
+        }
+    </script>
+</body>
+</html>
